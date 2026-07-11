@@ -1,0 +1,64 @@
+{
+  "schemaVersion":"2.0",
+  "mall":{"id":"vaal-mall","name":"Vaal Mall"},
+  "levels":[
+    {"id":"ground","name":"Ground-floor mall","kind":"retail","width":1536,"height":914},
+    {"id":"upper-retail","name":"Upper retail deck","kind":"retail","width":1000,"height":600},
+    {"id":"roof-parking","name":"Roof parking","kind":"parking","width":1000,"height":600},
+    {"id":"covered-level-2","name":"Second-level undercover parking","kind":"parking","width":1000,"height":600}
+  ],
+  "nodes":[
+    {"id":"g_pep","level":"ground","x":120,"y":445,"type":"entrance","name":"PEP entrance","access":"outdoor-ground"},
+    {"id":"g_main","level":"ground","x":390,"y":820,"type":"entrance","name":"Main outdoor entrance","access":"outdoor-ground"},
+    {"id":"g_bank","level":"ground","x":1020,"y":180,"type":"entrance","name":"Banking precinct entrance","access":"outdoor-ground"},
+    {"id":"g_pnp","level":"ground","x":1220,"y":455,"type":"entrance","name":"Pick n Pay entrance","access":"outdoor-ground"},
+    {"id":"g_wimpy","level":"ground","x":1110,"y":550,"type":"entrance","name":"Wimpy entrance","access":"outdoor-ground"},
+    {"id":"g_capitec","level":"ground","x":1005,"y":760,"type":"entrance","name":"Capitec / Calvano entrance","access":"outdoor-ground"},
+    {"id":"g_undercover","level":"ground","x":565,"y":805,"type":"entrance","name":"Ground undercover-parking entrance","access":"covered-ground"},
+
+    {"id":"g_w1","level":"ground","x":278,"y":414,"type":"junction"},
+    {"id":"g_w2","level":"ground","x":505,"y":430,"type":"junction"},
+    {"id":"g_w3","level":"ground","x":760,"y":438,"type":"junction"},
+    {"id":"g_w4","level":"ground","x":942,"y":424,"type":"junction"},
+    {"id":"g_w5","level":"ground","x":1068,"y":405,"type":"junction"},
+    {"id":"g_stairs_upper","level":"ground","x":620,"y":426,"type":"vertical","name":"Stairs / escalator to upper retail","mode":"stairs-escalator","connectsTo":"u_stairs"},
+    {"id":"g_roof_lift","level":"ground","x":850,"y":500,"type":"vertical","name":"Lift from roof parking to ground","mode":"lift","connectsTo":"r_lift"},
+    {"id":"g_l2_stairs","level":"ground","x":560,"y":800,"type":"vertical","name":"Stairs from second-level undercover parking","mode":"stairs","connectsTo":"c2_stairs"},
+
+    {"id":"g_edgars","level":"ground","x":302,"y":392,"type":"doorway","name":"Edgars"},
+    {"id":"g_wool","level":"ground","x":842,"y":430,"type":"doorway","name":"Woolworths"},
+    {"id":"g_picknpay","level":"ground","x":1126,"y":402,"type":"doorway","name":"Pick n Pay"},
+    {"id":"g_clicks","level":"ground","x":988,"y":285,"type":"doorway","name":"Clicks"},
+
+    {"id":"u_stairs","level":"upper-retail","x":180,"y":330,"type":"vertical","name":"Stairs / escalator from ground","mode":"stairs-escalator","connectsTo":"g_stairs_upper"},
+    {"id":"u_roof_entry","level":"upper-retail","x":820,"y":330,"type":"entrance","name":"Roof parking entrance to upper shops","access":"roof-direct"},
+    {"id":"u_j1","level":"upper-retail","x":350,"y":290,"type":"junction"},
+    {"id":"u_j2","level":"upper-retail","x":560,"y":290,"type":"junction"},
+    {"id":"u_j3","level":"upper-retail","x":740,"y":330,"type":"junction"},
+    {"id":"u_sk","level":"upper-retail","x":260,"y":130,"type":"doorway","name":"Ster-Kinekor"},
+    {"id":"u_jd","level":"upper-retail","x":455,"y":125,"type":"doorway","name":"John Dory's"},
+    {"id":"u_gh","level":"upper-retail","x":635,"y":130,"type":"doorway","name":"Grubhouse"},
+    {"id":"u_gold","level":"upper-retail","x":845,"y":180,"type":"doorway","name":"Gold Rush"},
+    {"id":"u_toilets","level":"upper-retail","x":860,"y":390,"type":"facility","name":"Upper-level toilets"},
+
+    {"id":"r_zone_a","level":"roof-parking","x":260,"y":300,"type":"parking","name":"Roof parking — upper retail side"},
+    {"id":"r_upper_entry","level":"roof-parking","x":520,"y":300,"type":"entrance","name":"Roof entrance to upper retail","access":"roof-direct","connectsTo":"u_roof_entry"},
+    {"id":"r_lift","level":"roof-parking","x":780,"y":300,"type":"vertical","name":"Roof lift to ground floor only","mode":"lift","connectsTo":"g_roof_lift"},
+
+    {"id":"c2_zone","level":"covered-level-2","x":300,"y":300,"type":"parking","name":"Second-level undercover parking"},
+    {"id":"c2_stairs","level":"covered-level-2","x":650,"y":300,"type":"vertical","name":"Stairs to ground floor only","mode":"stairs","connectsTo":"g_l2_stairs"}
+  ],
+  "edges":[
+    {"from":"g_pep","to":"g_w1"},{"from":"g_w1","to":"g_w2"},{"from":"g_w2","to":"g_w3"},{"from":"g_w3","to":"g_w4"},{"from":"g_w4","to":"g_w5"},{"from":"g_w5","to":"g_pnp"},
+    {"from":"g_w1","to":"g_edgars"},{"from":"g_w3","to":"g_wool"},{"from":"g_w5","to":"g_picknpay"},{"from":"g_w4","to":"g_clicks"},{"from":"g_clicks","to":"g_bank"},
+    {"from":"g_w1","to":"g_main"},{"from":"g_w5","to":"g_wimpy"},{"from":"g_w3","to":"g_capitec"},{"from":"g_w2","to":"g_undercover"},
+    {"from":"g_w2","to":"g_stairs_upper"},{"from":"g_w3","to":"g_roof_lift"},{"from":"g_undercover","to":"g_l2_stairs"},
+    {"from":"g_stairs_upper","to":"u_stairs","vertical":true,"mode":"stairs-escalator","cost":20},
+    {"from":"g_roof_lift","to":"r_lift","vertical":true,"mode":"lift","cost":15},
+    {"from":"g_l2_stairs","to":"c2_stairs","vertical":true,"mode":"stairs","cost":20},
+    {"from":"u_stairs","to":"u_j1"},{"from":"u_j1","to":"u_j2"},{"from":"u_j2","to":"u_j3"},{"from":"u_j3","to":"u_roof_entry"},
+    {"from":"u_j1","to":"u_sk"},{"from":"u_j1","to":"u_jd"},{"from":"u_j2","to":"u_gh"},{"from":"u_j3","to":"u_gold"},{"from":"u_j3","to":"u_toilets"},
+    {"from":"r_zone_a","to":"r_upper_entry"},{"from":"r_upper_entry","to":"u_roof_entry","vertical":true,"mode":"direct-entry","cost":5},{"from":"r_upper_entry","to":"r_lift"},
+    {"from":"c2_zone","to":"c2_stairs"}
+  ]
+}
