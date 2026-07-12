@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { edges, nodes, places, type Place } from './data';
+import { buildJourneyInstructions, instructionAtProgress, nextDecisionProgress } from './instructions';
 import { pathData, routePoint, shortestPath } from './routing';
 import { searchPlaces } from './search';
 
@@ -10,14 +11,6 @@ type ParkingRecord = {
 };
 
 const PARKING_KEY = 'mall-finder-parking-v1';
-
-function instructionFor(progress: number, destination: Place) {
-  if (progress >= 1) return { direction: '✓', label: 'Journey complete', title: `Welcome to ${destination.name}`, detail: 'You are at the correct customer entrance.' };
-  if (progress > .82) return { direction: '↑', label: 'Almost there', title: `${destination.name} is directly ahead`, detail: 'The entrance will highlight when you arrive.' };
-  if (progress > .56) return { direction: '↱', label: 'Next', title: 'Follow the corridor around the corner', detail: 'You are still on the correct route.' };
-  if (progress > .28) return { direction: '↑', label: 'Continue', title: 'Walk past the next landmark', detail: 'No action needed yet.' };
-  return { direction: '↑', label: 'Start', title: 'Continue along the main corridor', detail: 'We will alert you before the next decision point.' };
-}
 
 function loadParking(): ParkingRecord | null {
   try {
@@ -37,17 +30,25 @@ export default function App() {
   const [parking, setParking] = useState<ParkingRecord | null>(() => loadParking());
   const [parkingSection, setParkingSection] = useState('Blue B14');
   const [parkingEntrance, setParkingEntrance] = useState<ParkingRecord['entrance']>('east');
+  const lastMilestone = useRef(-1);
 
   const results = useMemo(() => searchPlaces(places, query), [query]);
   const route = destination?.floor === 'ground' ? shortestPath(start, destination.nodeId) : [];
   const routePath = pathData(route);
   const marker = routePoint(route, progress);
   const arrived = progress >= 1;
-  const instruction = destination ? instructionFor(progress, destination) : null;
+  const journeyInstructions = useMemo(
+    () => destination ? buildJourneyInstructions(route, destination) : [],
+    [destination, route.join('|')]
+  );
+  const instruction = journeyInstructions.length ? instructionAtProgress(journeyInstructions, progress) : null;
+  const nextDecision = journeyInstructions.length ? nextDecisionProgress(journeyInstructions, progress) : 1;
+  const decisionDistance = Math.max(0, Math.round((nextDecision - progress) * 140));
 
   useEffect(() => {
     if (!destination || destination.floor !== 'ground') return;
     setProgress(0);
+    lastMilestone.current = -1;
     const startedAt = performance.now();
     const duration = 9000;
     const timer = window.setInterval(() => {
@@ -57,6 +58,12 @@ export default function App() {
     }, 80);
     return () => window.clearInterval(timer);
   }, [destination, start]);
+
+  useEffect(() => {
+    if (!instruction || instruction.milestone === lastMilestone.current) return;
+    lastMilestone.current = instruction.milestone;
+    if ('vibrate' in navigator) navigator.vibrate(instruction.milestone >= 1 ? [70, 45, 70] : 55);
+  }, [instruction]);
 
   function beginJourney(place: Place, origin = start) {
     setStart(origin);
@@ -143,7 +150,7 @@ export default function App() {
           {instruction && (
             <div className={`instruction-card ${arrived ? 'arrived' : 'walking'}`}>
               <span className="direction">{instruction.direction}</span>
-              <div><small>{instruction.label}</small><strong>{instruction.title}</strong><p>{instruction.detail}</p></div>
+              <div><small>{instruction.label}</small><strong>{instruction.title}</strong><p>{instruction.detail}</p>{!arrived && decisionDistance > 0 && <em className="decision-distance">Decision point in about {decisionDistance} m</em>}</div>
               {arrived && <button className="restart-button" onClick={restartJourney}>Replay</button>}
             </div>
           )}
