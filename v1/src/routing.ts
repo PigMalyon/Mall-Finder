@@ -3,12 +3,18 @@ import { edges, nodes } from './data';
 export type RoutePoint = { x: number; y: number; angle: number };
 
 export function distance(a: string, b: string) {
-  const [ax, ay] = nodes[a];
-  const [bx, by] = nodes[b];
+  const from = nodes[a];
+  const to = nodes[b];
+  if (!from || !to) return Infinity;
+  const [ax, ay] = from;
+  const [bx, by] = to;
   return Math.hypot(ax - bx, ay - by);
 }
 
 export function shortestPath(start: string, end: string) {
+  if (!nodes[start] || !nodes[end]) return [];
+  if (start === end) return [start];
+
   const queue = [start];
   const previous: Record<string, string | undefined> = {};
   const distances: Record<string, number> = Object.fromEntries(Object.keys(nodes).map((key) => [key, Infinity]));
@@ -36,13 +42,22 @@ export function shortestPath(start: string, end: string) {
 }
 
 export function pathData(route: string[]) {
-  return route.map((node, index) => `${index === 0 ? 'M' : 'L'} ${nodes[node][0]} ${nodes[node][1]}`).join(' ');
+  return route
+    .filter((node) => Boolean(nodes[node]))
+    .map((node, index) => `${index === 0 ? 'M' : 'L'} ${nodes[node][0]} ${nodes[node][1]}`)
+    .join(' ');
 }
 
 export function routePoint(route: string[], progress: number): RoutePoint {
-  if (route.length < 2) return { x: 0, y: 0, angle: 0 };
-  const segments = route.slice(0, -1).map((node, index) => {
-    const next = route[index + 1];
+  const validRoute = route.filter((node) => Boolean(nodes[node]));
+  if (!validRoute.length) return { x: 0, y: 0, angle: 0 };
+  if (validRoute.length === 1) {
+    const [x, y] = nodes[validRoute[0]];
+    return { x, y, angle: 0 };
+  }
+
+  const segments = validRoute.slice(0, -1).map((node, index) => {
+    const next = validRoute[index + 1];
     return { from: nodes[node], to: nodes[next], length: distance(node, next) };
   });
   const total = segments.reduce((sum, segment) => sum + segment.length, 0);
