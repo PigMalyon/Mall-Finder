@@ -4,6 +4,14 @@ import App from './App';
 import './styles.css';
 import './features.css';
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // The app remains fully usable when service workers are unavailable.
+    });
+  });
+}
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
