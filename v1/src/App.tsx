@@ -1,66 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { edges, nodes, places, type Place } from './data';
-
-function distance(a: string, b: string) {
-  const [ax, ay] = nodes[a];
-  const [bx, by] = nodes[b];
-  return Math.hypot(ax - bx, ay - by);
-}
-
-function shortestPath(start: string, end: string) {
-  const queue = [start];
-  const previous: Record<string, string | undefined> = {};
-  const distances: Record<string, number> = Object.fromEntries(Object.keys(nodes).map((key) => [key, Infinity]));
-  distances[start] = 0;
-
-  while (queue.length) {
-    queue.sort((a, b) => distances[a] - distances[b]);
-    const current = queue.shift()!;
-    if (current === end) break;
-
-    edges.filter((edge) => edge.includes(current)).forEach(([a, b]) => {
-      const neighbour = a === current ? b : a;
-      const nextDistance = distances[current] + distance(current, neighbour);
-      if (nextDistance < distances[neighbour]) {
-        distances[neighbour] = nextDistance;
-        previous[neighbour] = current;
-        if (!queue.includes(neighbour)) queue.push(neighbour);
-      }
-    });
-  }
-
-  const route: string[] = [];
-  for (let current: string | undefined = end; current; current = previous[current]) route.unshift(current);
-  return route[0] === start ? route : [];
-}
-
-function pathData(route: string[]) {
-  return route.map((node, index) => `${index === 0 ? 'M' : 'L'} ${nodes[node][0]} ${nodes[node][1]}`).join(' ');
-}
-
-function routePoint(route: string[], progress: number) {
-  if (route.length < 2) return { x: 0, y: 0, angle: 0 };
-  const segments = route.slice(0, -1).map((node, index) => {
-    const next = route[index + 1];
-    return { from: nodes[node], to: nodes[next], length: distance(node, next) };
-  });
-  const total = segments.reduce((sum, segment) => sum + segment.length, 0);
-  let remaining = Math.max(0, Math.min(1, progress)) * total;
-
-  for (const segment of segments) {
-    if (remaining <= segment.length) {
-      const ratio = segment.length ? remaining / segment.length : 0;
-      const x = segment.from[0] + (segment.to[0] - segment.from[0]) * ratio;
-      const y = segment.from[1] + (segment.to[1] - segment.from[1]) * ratio;
-      const angle = Math.atan2(segment.to[1] - segment.from[1], segment.to[0] - segment.from[0]) * 180 / Math.PI + 90;
-      return { x, y, angle };
-    }
-    remaining -= segment.length;
-  }
-
-  const last = segments[segments.length - 1];
-  return { x: last.to[0], y: last.to[1], angle: 0 };
-}
+import { pathData, routePoint, shortestPath } from './routing';
+import { searchPlaces } from './search';
 
 function instructionFor(progress: number, destination: Place) {
   if (progress >= 1) return { direction: '✓', label: 'Journey complete', title: `Welcome to ${destination.name}`, detail: 'You are at the correct customer entrance.' };
@@ -76,12 +17,7 @@ export default function App() {
   const [start, setStart] = useState('east');
   const [progress, setProgress] = useState(0);
 
-  const results = useMemo(() => {
-    const value = query.trim().toLowerCase();
-    if (!value) return places.slice(0, 5);
-    return places.filter((place) => [place.name, place.category, ...place.keywords].join(' ').toLowerCase().includes(value));
-  }, [query]);
-
+  const results = useMemo(() => searchPlaces(places, query), [query]);
   const route = destination?.floor === 'ground' ? shortestPath(start, destination.nodeId) : [];
   const routePath = pathData(route);
   const marker = routePoint(route, progress);
@@ -132,6 +68,13 @@ export default function App() {
                 <button onClick={() => beginJourney(place)}>Take me there</button>
               </article>
             ))}
+            {query && results.length === 0 && (
+              <div className="empty-state">
+                <strong>No matching place found</strong>
+                <span>Try a store name, category, product type or facility.</span>
+                <button onClick={() => setQuery('')}>Clear search</button>
+              </div>
+            )}
           </div>
         </section>
       ) : (
