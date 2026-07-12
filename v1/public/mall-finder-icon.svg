@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Mall Finder">
+  <rect width="512" height="512" rx="112" fill="#0757b8"/>
+  <path d="M154 180h204l-18 204H172z" fill="#ffe100"/>
+  <path d="M205 184c0-40 22-68 51-68s51 28 51 68" fill="none" stroke="#fff" stroke-width="28" stroke-linecap="round"/>
+  <circle cx="256" cy="284" r="54" fill="#fff"/>
+  <path d="M256 240c-35 0-64 29-64 64 0 48 64 112 64 112s64-64 64-112c0-35-29-64-64-64zm0 86a24 24 0 1 1 0-48 24 24 0 0 1 0 48z" fill="#0757b8"/>
+</svg>
