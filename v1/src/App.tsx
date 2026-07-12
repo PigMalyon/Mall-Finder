@@ -3,6 +3,14 @@ import { edges, nodes, places, type Place } from './data';
 import { pathData, routePoint, shortestPath } from './routing';
 import { searchPlaces } from './search';
 
+type ParkingRecord = {
+  section: string;
+  entrance: 'west' | 'south' | 'east' | 'north';
+  savedAt: number;
+};
+
+const PARKING_KEY = 'mall-finder-parking-v1';
+
 function instructionFor(progress: number, destination: Place) {
   if (progress >= 1) return { direction: '✓', label: 'Journey complete', title: `Welcome to ${destination.name}`, detail: 'You are at the correct customer entrance.' };
   if (progress > .82) return { direction: '↑', label: 'Almost there', title: `${destination.name} is directly ahead`, detail: 'The entrance will highlight when you arrive.' };
@@ -11,11 +19,24 @@ function instructionFor(progress: number, destination: Place) {
   return { direction: '↑', label: 'Start', title: 'Continue along the main corridor', detail: 'We will alert you before the next decision point.' };
 }
 
+function loadParking(): ParkingRecord | null {
+  try {
+    const raw = localStorage.getItem(PARKING_KEY);
+    return raw ? JSON.parse(raw) as ParkingRecord : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [destination, setDestination] = useState<Place | null>(null);
   const [start, setStart] = useState('east');
   const [progress, setProgress] = useState(0);
+  const [view, setView] = useState<'home' | 'car'>('home');
+  const [parking, setParking] = useState<ParkingRecord | null>(() => loadParking());
+  const [parkingSection, setParkingSection] = useState('Blue B14');
+  const [parkingEntrance, setParkingEntrance] = useState<ParkingRecord['entrance']>('east');
 
   const results = useMemo(() => searchPlaces(places, query), [query]);
   const route = destination?.floor === 'ground' ? shortestPath(start, destination.nodeId) : [];
@@ -37,7 +58,8 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [destination, start]);
 
-  function beginJourney(place: Place) {
+  function beginJourney(place: Place, origin = start) {
+    setStart(origin);
     setProgress(0);
     setDestination(place);
   }
@@ -49,35 +71,35 @@ export default function App() {
     window.setTimeout(() => setDestination(current), 0);
   }
 
-  return (
-    <main className="app-shell">
-      <header className="hero">
-        <div className="brand-row"><strong>Mall Finder</strong><span>Vaal Mall</span></div>
-        <h1>Where are you going today?</h1>
-        <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search stores, food or facilities" />
-      </header>
+  function saveParking() {
+    const next: ParkingRecord = { section: parkingSection.trim() || 'Saved parking', entrance: parkingEntrance, savedAt: Date.now() };
+    localStorage.setItem(PARKING_KEY, JSON.stringify(next));
+    setParking(next);
+  }
 
-      {!destination ? (
-        <section className="content">
-          <div className="section-heading"><h2>{query ? 'Search results' : 'Popular destinations'}</h2><small>{results.length} places</small></div>
-          <div className="results">
-            {results.map((place) => (
-              <article className="place-card" key={place.id}>
-                <div className="place-icon">{place.icon}</div>
-                <div className="place-copy"><strong>{place.name}</strong><span>{place.category} · {place.floor === 'ground' ? 'Ground floor' : 'Upper level'}</span></div>
-                <button onClick={() => beginJourney(place)}>Take me there</button>
-              </article>
-            ))}
-            {query && results.length === 0 && (
-              <div className="empty-state">
-                <strong>No matching place found</strong>
-                <span>Try a store name, category, product type or facility.</span>
-                <button onClick={() => setQuery('')}>Clear search</button>
-              </div>
-            )}
-          </div>
-        </section>
-      ) : (
+  function clearParking() {
+    localStorage.removeItem(PARKING_KEY);
+    setParking(null);
+  }
+
+  function returnToCar() {
+    if (!parking) return;
+    const carPlace: Place = {
+      id: 'my-car',
+      name: `My Car · ${parking.section}`,
+      category: 'Parking',
+      floor: 'ground',
+      icon: '🚗',
+      nodeId: parking.entrance,
+      keywords: ['car', 'parking', 'vehicle']
+    };
+    setView('home');
+    beginJourney(carPlace, 'hub');
+  }
+
+  if (destination) {
+    return (
+      <main className="app-shell">
         <section className="navigation-view">
           <div className="journey-card">
             <button className="back-button" onClick={() => setDestination(null)}>‹</button>
@@ -85,7 +107,7 @@ export default function App() {
             <span className={`route-status ${arrived ? 'arrived' : 'walking'}`}>{arrived ? '✓ Arrived' : '✓ On route'}</span>
           </div>
 
-          {destination.floor === 'ground' && (
+          {destination.floor === 'ground' && destination.id !== 'my-car' && (
             <div className="start-picker" aria-label="Choose starting entrance">
               {['west', 'south', 'east', 'north'].map((entrance) => (
                 <button key={entrance} className={start === entrance ? 'selected' : ''} onClick={() => setStart(entrance)}>{entrance}</button>
@@ -102,19 +124,15 @@ export default function App() {
                 <g className="moving-marker" transform={`translate(${marker.x} ${marker.y}) rotate(${marker.angle})`}>
                   <circle className="position-pulse" r="17" />
                   <g className="person">
-                    <circle cy="-9" r="4.8" />
-                    <path className="body" d="M0-3 L1 7" />
-                    <path className="arm arm-left" d="M0 0 L-7 5" />
-                    <path className="arm arm-right" d="M0 0 L7 4" />
-                    <path className="leg leg-left" d="M1 7 L-6 15" />
-                    <path className="leg leg-right" d="M1 7 L8 14" />
+                    <circle cy="-9" r="4.8" /><path className="body" d="M0-3 L1 7" />
+                    <path className="arm arm-left" d="M0 0 L-7 5" /><path className="arm arm-right" d="M0 0 L7 4" />
+                    <path className="leg leg-left" d="M1 7 L-6 15" /><path className="leg leg-right" d="M1 7 L8 14" />
                   </g>
                 </g>
               )}
               {destination.floor === 'ground' && arrived && (
                 <g transform={`translate(${nodes[destination.nodeId][0]} ${nodes[destination.nodeId][1]})`}>
-                  <circle className="arrival-glow" r="24" />
-                  <circle className="destination" r="10" />
+                  <circle className="arrival-glow" r="24" /><circle className="destination" r="10" />
                 </g>
               )}
               {destination.floor === 'ground' && !arrived && <circle className="destination" cx={nodes[destination.nodeId][0]} cy={nodes[destination.nodeId][1]} r="10" />}
@@ -130,7 +148,63 @@ export default function App() {
             </div>
           )}
         </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className="app-shell with-bottom-nav">
+      {view === 'home' ? (
+        <>
+          <header className="hero">
+            <div className="brand-row"><strong>Mall Finder</strong><span>Vaal Mall</span></div>
+            <h1>Where are you going today?</h1>
+            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search stores, food or facilities" />
+          </header>
+          <section className="content">
+            {parking && (
+              <button className="return-car-card" onClick={returnToCar}>
+                <span>🚗</span><div><small>Parking saved</small><strong>Return to {parking.section}</strong><em>Near {parking.entrance} entrance</em></div><b>›</b>
+              </button>
+            )}
+            <div className="section-heading"><h2>{query ? 'Search results' : 'Popular destinations'}</h2><small>{results.length} places</small></div>
+            <div className="results">
+              {results.map((place) => (
+                <article className="place-card" key={place.id}>
+                  <div className="place-icon">{place.icon}</div>
+                  <div className="place-copy"><strong>{place.name}</strong><span>{place.category} · {place.floor === 'ground' ? 'Ground floor' : 'Upper level'}</span></div>
+                  <button onClick={() => beginJourney(place)}>Take me there</button>
+                </article>
+              ))}
+              {query && results.length === 0 && (
+                <div className="empty-state"><strong>No matching place found</strong><span>Try a store name, category, product type or facility.</span><button onClick={() => setQuery('')}>Clear search</button></div>
+              )}
+            </div>
+          </section>
+        </>
+      ) : (
+        <section className="parking-view">
+          <div className="parking-header"><span>🚗</span><div><small>My Car</small><h1>{parking ? parking.section : 'Save your parking'}</h1></div></div>
+          {parking ? (
+            <div className="parking-card saved">
+              <span className="parking-check">✓</span><h2>Vehicle saved</h2><p>Near the {parking.entrance} entrance</p>
+              <button className="primary-action" onClick={returnToCar}>Take me back</button>
+              <button className="text-action" onClick={clearParking}>Delete parking</button>
+            </div>
+          ) : (
+            <div className="parking-card">
+              <label>Parking section<input value={parkingSection} onChange={(event) => setParkingSection(event.target.value)} placeholder="e.g. Blue B14" /></label>
+              <label>Closest entrance<select value={parkingEntrance} onChange={(event) => setParkingEntrance(event.target.value as ParkingRecord['entrance'])}><option value="west">West</option><option value="south">South</option><option value="east">East</option><option value="north">North</option></select></label>
+              <button className="primary-action" onClick={saveParking}>Save my parking</button>
+            </div>
+          )}
+        </section>
       )}
+
+      <nav className="bottom-nav" aria-label="Main navigation">
+        <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span>⌂</span>Home</button>
+        <button className={view === 'car' ? 'active' : ''} onClick={() => setView('car')}><span>🚗</span>My Car</button>
+      </nav>
     </main>
   );
 }
