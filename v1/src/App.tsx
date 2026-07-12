@@ -10,7 +10,10 @@ type ParkingRecord = {
   savedAt: number;
 };
 
+type View = 'home' | 'saved' | 'car';
+
 const PARKING_KEY = 'mall-finder-parking-v1';
+const FAVOURITES_KEY = 'mall-finder-favourites-v1';
 
 function loadParking(): ParkingRecord | null {
   try {
@@ -21,18 +24,29 @@ function loadParking(): ParkingRecord | null {
   }
 }
 
+function loadFavourites(): string[] {
+  try {
+    const raw = localStorage.getItem(FAVOURITES_KEY);
+    return raw ? JSON.parse(raw) as string[] : [];
+  } catch {
+    return [];
+  }
+}
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [destination, setDestination] = useState<Place | null>(null);
   const [start, setStart] = useState('east');
   const [progress, setProgress] = useState(0);
-  const [view, setView] = useState<'home' | 'car'>('home');
+  const [view, setView] = useState<View>('home');
   const [parking, setParking] = useState<ParkingRecord | null>(() => loadParking());
   const [parkingSection, setParkingSection] = useState('Blue B14');
   const [parkingEntrance, setParkingEntrance] = useState<ParkingRecord['entrance']>('east');
+  const [favourites, setFavourites] = useState<string[]>(() => loadFavourites());
   const lastMilestone = useRef(-1);
 
   const results = useMemo(() => searchPlaces(places, query), [query]);
+  const savedPlaces = useMemo(() => places.filter((place) => favourites.includes(place.id)), [favourites]);
   const route = destination?.floor === 'ground' ? shortestPath(start, destination.nodeId) : [];
   const routePath = pathData(route);
   const marker = routePoint(route, progress);
@@ -78,6 +92,14 @@ export default function App() {
     window.setTimeout(() => setDestination(current), 0);
   }
 
+  function toggleFavourite(id: string) {
+    setFavourites((current) => {
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id];
+      localStorage.setItem(FAVOURITES_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
   function saveParking() {
     const next: ParkingRecord = { section: parkingSection.trim() || 'Saved parking', entrance: parkingEntrance, savedAt: Date.now() };
     localStorage.setItem(PARKING_KEY, JSON.stringify(next));
@@ -102,6 +124,23 @@ export default function App() {
     };
     setView('home');
     beginJourney(carPlace, 'hub');
+  }
+
+  function chooseShortcut(value: string) {
+    setView('home');
+    setQuery(value);
+  }
+
+  function renderPlaceCard(place: Place) {
+    const saved = favourites.includes(place.id);
+    return (
+      <article className="place-card" key={place.id}>
+        <div className="place-icon">{place.icon}</div>
+        <div className="place-copy"><strong>{place.name}</strong><span>{place.category} · {place.floor === 'ground' ? 'Ground floor' : 'Upper level'}</span></div>
+        <button className={`favourite-button ${saved ? 'saved' : ''}`} aria-label={saved ? `Remove ${place.name} from saved` : `Save ${place.name}`} onClick={() => toggleFavourite(place.id)}>{saved ? '★' : '☆'}</button>
+        <button className="route-button" onClick={() => beginJourney(place)}>Take me there</button>
+      </article>
+    );
   }
 
   if (destination) {
@@ -147,6 +186,10 @@ export default function App() {
             </svg>
           </div>
 
+          {destination.floor === 'upper' && (
+            <div className="upper-level-card"><span>↟</span><div><strong>Continue to the upper level</strong><p>Use the accessible lift or escalator at the central atrium.</p></div></div>
+          )}
+
           {instruction && (
             <div className={`instruction-card ${arrived ? 'arrived' : 'walking'}`}>
               <span className="direction">{instruction.direction}</span>
@@ -161,7 +204,7 @@ export default function App() {
 
   return (
     <main className="app-shell with-bottom-nav">
-      {view === 'home' ? (
+      {view === 'home' && (
         <>
           <header className="hero">
             <div className="brand-row"><strong>Mall Finder</strong><span>Vaal Mall</span></div>
@@ -174,22 +217,36 @@ export default function App() {
                 <span>🚗</span><div><small>Parking saved</small><strong>Return to {parking.section}</strong><em>Near {parking.entrance} entrance</em></div><b>›</b>
               </button>
             )}
+            {!query && (
+              <div className="shortcut-grid" aria-label="Quick destinations">
+                <button onClick={() => chooseShortcut('toilet')}><span>WC</span>Toilets</button>
+                <button onClick={() => chooseShortcut('ATM')}><span>ATM</span>Cash</button>
+                <button onClick={() => chooseShortcut('food')}><span>🍽</span>Food</button>
+                <button onClick={() => chooseShortcut('information')}><span>i</span>Help</button>
+              </div>
+            )}
             <div className="section-heading"><h2>{query ? 'Search results' : 'Popular destinations'}</h2><small>{results.length} places</small></div>
             <div className="results">
-              {results.map((place) => (
-                <article className="place-card" key={place.id}>
-                  <div className="place-icon">{place.icon}</div>
-                  <div className="place-copy"><strong>{place.name}</strong><span>{place.category} · {place.floor === 'ground' ? 'Ground floor' : 'Upper level'}</span></div>
-                  <button onClick={() => beginJourney(place)}>Take me there</button>
-                </article>
-              ))}
+              {results.map(renderPlaceCard)}
               {query && results.length === 0 && (
                 <div className="empty-state"><strong>No matching place found</strong><span>Try a store name, category, product type or facility.</span><button onClick={() => setQuery('')}>Clear search</button></div>
               )}
             </div>
           </section>
         </>
-      ) : (
+      )}
+
+      {view === 'saved' && (
+        <section className="saved-view">
+          <div className="page-heading"><div><small>Your places</small><h1>Saved</h1></div><span>{savedPlaces.length}</span></div>
+          <div className="results">
+            {savedPlaces.map(renderPlaceCard)}
+            {savedPlaces.length === 0 && <div className="empty-state"><strong>No saved places yet</strong><span>Tap the star beside a store or facility to keep it here.</span><button onClick={() => setView('home')}>Browse places</button></div>}
+          </div>
+        </section>
+      )}
+
+      {view === 'car' && (
         <section className="parking-view">
           <div className="parking-header"><span>🚗</span><div><small>My Car</small><h1>{parking ? parking.section : 'Save your parking'}</h1></div></div>
           {parking ? (
@@ -210,6 +267,7 @@ export default function App() {
 
       <nav className="bottom-nav" aria-label="Main navigation">
         <button className={view === 'home' ? 'active' : ''} onClick={() => setView('home')}><span>⌂</span>Home</button>
+        <button className={view === 'saved' ? 'active' : ''} onClick={() => setView('saved')}><span>★</span>Saved</button>
         <button className={view === 'car' ? 'active' : ''} onClick={() => setView('car')}><span>🚗</span>My Car</button>
       </nav>
     </main>
