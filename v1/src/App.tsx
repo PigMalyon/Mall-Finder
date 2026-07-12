@@ -38,11 +38,43 @@ function pathData(route: string[]) {
   return route.map((node, index) => `${index === 0 ? 'M' : 'L'} ${nodes[node][0]} ${nodes[node][1]}`).join(' ');
 }
 
+function routePoint(route: string[], progress: number) {
+  if (route.length < 2) return { x: 0, y: 0, angle: 0 };
+  const segments = route.slice(0, -1).map((node, index) => {
+    const next = route[index + 1];
+    return { from: nodes[node], to: nodes[next], length: distance(node, next) };
+  });
+  const total = segments.reduce((sum, segment) => sum + segment.length, 0);
+  let remaining = Math.max(0, Math.min(1, progress)) * total;
+
+  for (const segment of segments) {
+    if (remaining <= segment.length) {
+      const ratio = segment.length ? remaining / segment.length : 0;
+      const x = segment.from[0] + (segment.to[0] - segment.from[0]) * ratio;
+      const y = segment.from[1] + (segment.to[1] - segment.from[1]) * ratio;
+      const angle = Math.atan2(segment.to[1] - segment.from[1], segment.to[0] - segment.from[0]) * 180 / Math.PI + 90;
+      return { x, y, angle };
+    }
+    remaining -= segment.length;
+  }
+
+  const last = segments[segments.length - 1];
+  return { x: last.to[0], y: last.to[1], angle: 0 };
+}
+
+function instructionFor(progress: number, destination: Place) {
+  if (progress >= 1) return { direction: '✓', label: 'Journey complete', title: `Welcome to ${destination.name}`, detail: 'You are at the correct customer entrance.' };
+  if (progress > .82) return { direction: '↑', label: 'Almost there', title: `${destination.name} is directly ahead`, detail: 'The entrance will highlight when you arrive.' };
+  if (progress > .56) return { direction: '↱', label: 'Next', title: 'Follow the corridor around the corner', detail: 'You are still on the correct route.' };
+  if (progress > .28) return { direction: '↑', label: 'Continue', title: 'Walk past the next landmark', detail: 'No action needed yet.' };
+  return { direction: '↑', label: 'Start', title: 'Continue along the main corridor', detail: 'We will alert you before the next decision point.' };
+}
+
 export default function App() {
   const [query, setQuery] = useState('');
   const [destination, setDestination] = useState<Place | null>(null);
   const [start, setStart] = useState('east');
-  const [journeyState, setJourneyState] = useState<'walking' | 'arrived'>('walking');
+  const [progress, setProgress] = useState(0);
 
   const results = useMemo(() => {
     const value = query.trim().toLowerCase();
@@ -52,17 +84,33 @@ export default function App() {
 
   const route = destination?.floor === 'ground' ? shortestPath(start, destination.nodeId) : [];
   const routePath = pathData(route);
+  const marker = routePoint(route, progress);
+  const arrived = progress >= 1;
+  const instruction = destination ? instructionFor(progress, destination) : null;
 
   useEffect(() => {
     if (!destination || destination.floor !== 'ground') return;
-    setJourneyState('walking');
-    const timer = window.setTimeout(() => setJourneyState('arrived'), 8500);
-    return () => window.clearTimeout(timer);
+    setProgress(0);
+    const startedAt = performance.now();
+    const duration = 9000;
+    const timer = window.setInterval(() => {
+      const next = Math.min(1, (performance.now() - startedAt) / duration);
+      setProgress(next);
+      if (next >= 1) window.clearInterval(timer);
+    }, 80);
+    return () => window.clearInterval(timer);
   }, [destination, start]);
 
   function beginJourney(place: Place) {
-    setJourneyState('walking');
+    setProgress(0);
     setDestination(place);
+  }
+
+  function restartJourney() {
+    setProgress(0);
+    const current = destination;
+    setDestination(null);
+    window.setTimeout(() => setDestination(current), 0);
   }
 
   return (
@@ -90,8 +138,8 @@ export default function App() {
         <section className="navigation-view">
           <div className="journey-card">
             <button className="back-button" onClick={() => setDestination(null)}>‹</button>
-            <div><small>{journeyState === 'arrived' ? 'Welcome to' : 'Going to'}</small><h2>{destination.name}</h2><p>{journeyState === 'arrived' ? 'You are at the customer entrance' : destination.floor === 'upper' ? 'Upper-level transfer required' : 'About a 2 minute walk'}</p></div>
-            <span className={`route-status ${journeyState}`}>{journeyState === 'arrived' ? '✓ Arrived' : '✓ On route'}</span>
+            <div><small>{arrived ? 'Welcome to' : 'Going to'}</small><h2>{destination.name}</h2><p>{arrived ? 'You are at the customer entrance' : destination.floor === 'upper' ? 'Upper-level transfer required' : `${Math.max(1, Math.ceil((1 - progress) * 2))} min remaining`}</p></div>
+            <span className={`route-status ${arrived ? 'arrived' : 'walking'}`}>{arrived ? '✓ Arrived' : '✓ On route'}</span>
           </div>
 
           {destination.floor === 'ground' && (
@@ -105,9 +153,10 @@ export default function App() {
           <div className="map-canvas">
             <svg viewBox="0 0 590 410" role="img" aria-label={`Route to ${destination.name}`}>
               {edges.map(([a, b]) => <line key={`${a}-${b}`} className="corridor" x1={nodes[a][0]} y1={nodes[a][1]} x2={nodes[b][0]} y2={nodes[b][1]} />)}
-              {destination.floor === 'ground' && <path id="activeRoutePath" className="active-route" d={routePath} />}
-              {destination.floor === 'ground' && journeyState === 'walking' && (
-                <g className="moving-marker">
+              {destination.floor === 'ground' && <path className="completed-route" d={routePath} />}
+              {destination.floor === 'ground' && <path className="active-route" pathLength="100" strokeDasharray={`${Math.max(0, 100 - progress * 100)} 100`} strokeDashoffset={-progress * 100} d={routePath} />}
+              {destination.floor === 'ground' && !arrived && (
+                <g className="moving-marker" transform={`translate(${marker.x} ${marker.y}) rotate(${marker.angle})`}>
                   <circle className="position-pulse" r="17" />
                   <g className="person">
                     <circle cy="-9" r="4.8" />
@@ -117,24 +166,26 @@ export default function App() {
                     <path className="leg leg-left" d="M1 7 L-6 15" />
                     <path className="leg leg-right" d="M1 7 L8 14" />
                   </g>
-                  <animateMotion dur="8s" fill="freeze" rotate="auto" path={routePath} />
                 </g>
               )}
-              {destination.floor === 'ground' && journeyState === 'arrived' && (
+              {destination.floor === 'ground' && arrived && (
                 <g transform={`translate(${nodes[destination.nodeId][0]} ${nodes[destination.nodeId][1]})`}>
                   <circle className="arrival-glow" r="24" />
                   <circle className="destination" r="10" />
                 </g>
               )}
-              {destination.floor === 'ground' && journeyState === 'walking' && <circle className="destination" cx={nodes[destination.nodeId][0]} cy={nodes[destination.nodeId][1]} r="10" />}
+              {destination.floor === 'ground' && !arrived && <circle className="destination" cx={nodes[destination.nodeId][0]} cy={nodes[destination.nodeId][1]} r="10" />}
               <text x="425" y="205">Woolworths</text><text x="160" y="295">Dis-Chem</text><text x="160" y="165">Adidas</text><text x="145" y="105">Food Court</text>
             </svg>
           </div>
 
-          <div className={`instruction-card ${journeyState}`}>
-            <span className="direction">{journeyState === 'arrived' ? '✓' : '↑'}</span>
-            <div><small>{journeyState === 'arrived' ? 'Journey complete' : 'Next'}</small><strong>{journeyState === 'arrived' ? `Welcome to ${destination.name}` : destination.floor === 'upper' ? 'Continue to the upper-level access point' : 'Continue along the main corridor'}</strong><p>{journeyState === 'arrived' ? 'The highlighted point is the correct customer entrance.' : 'We will alert you before the next decision point.'}</p></div>
-          </div>
+          {instruction && (
+            <div className={`instruction-card ${arrived ? 'arrived' : 'walking'}`}>
+              <span className="direction">{instruction.direction}</span>
+              <div><small>{instruction.label}</small><strong>{instruction.title}</strong><p>{instruction.detail}</p></div>
+              {arrived && <button className="restart-button" onClick={restartJourney}>Replay</button>}
+            </div>
+          )}
         </section>
       )}
     </main>
