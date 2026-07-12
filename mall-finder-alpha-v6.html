@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Mall Finder Alpha V6</title>
+<style>
+:root{--green:#006b45;--blue:#0b6df2;--yellow:#ffd60a;--ink:#101828;--muted:#667085;--bg:#f4f7fb;--card:#fff;--line:#e4e7ec;--danger:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+button,input,select{font:inherit}.app{max-width:430px;margin:auto;min-height:100vh;background:#f8fafc;padding-bottom:88px}
+.top{background:linear-gradient(135deg,#032d25,#006b45);color:#fff;padding:20px 18px 22px;border-radius:0 0 28px 28px;position:relative;overflow:hidden}
+.top:after{content:"";position:absolute;right:-72px;bottom:-95px;width:240px;height:240px;border:1px solid #ffffff1f;border-radius:50%}
+.brand,.rowline{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand h1{font-size:25px;margin:0}.mall{font-size:13px;opacity:.9;margin-top:4px}
+.avatar{width:38px;height:38px;border-radius:50%;background:#ffffff20;display:grid;place-items:center;font-weight:800}
+.search{margin-top:18px}.search input{width:100%;border:0;border-radius:16px;padding:15px 16px;font-size:16px;box-shadow:0 8px 24px #001b1433}
+.content{padding:16px}.quick{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.quick button,.card,.result,.sheet{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 25px #1018280d}
+.quick button{padding:16px;text-align:left}.quick b{display:block;margin-top:8px}.section{margin-top:18px}.section h2{font-size:17px;margin:0 0 10px}
+.chips{display:flex;gap:8px;overflow:auto;padding-bottom:3px}.chip{border:1px solid #d0d5dd;background:#fff;border-radius:999px;padding:9px 12px;white-space:nowrap}.chip.active{background:#101828;color:#fff;border-color:#101828}
+.results{display:grid;gap:10px}.result{padding:14px;display:flex;gap:12px;align-items:center}.badge{width:46px;height:46px;border-radius:14px;background:#101010;color:#fff;display:grid;place-items:center;font-weight:900;font-size:13px}
+.meta{flex:1;min-width:0}.meta h3{margin:0 0 3px;font-size:15px}.meta p{margin:0;color:var(--muted);font-size:12px}.meta .open{color:#087443}
+.btn{border:0;border-radius:13px;padding:11px 13px;font-weight:850}.yellow{background:var(--yellow)}.green{background:var(--green);color:#fff}.outline{background:#fff;border:1px solid #d0d5dd}.danger{background:#fff0ee;color:var(--danger)}
+.banner{display:none;background:#ecfdf3;border:1px solid #abefc6;color:#05603a;border-radius:16px;padding:12px;margin-top:12px;font-size:13px}
+.view{display:none}.sheet{padding:16px}.hero{display:flex;gap:14px;align-items:center}.logo{width:64px;height:64px;border-radius:16px;background:#111;color:#fff;display:grid;place-items:center;font-size:26px;font-weight:900}
+.actions{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:8px;margin-top:16px}.actions button{padding:14px 8px}.rows{margin-top:14px;border-top:1px solid var(--line)}.detailrow{padding:13px 0;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px}.detailrow small{color:var(--muted)}
+.map{margin-top:12px;background:#edf1f4;border-radius:22px;min-height:390px;overflow:hidden;border:1px solid #d0d5dd}.map svg{width:100%;height:390px}.shop{fill:#e7e9ee;stroke:#c9ced8}.shopText{font-size:11px;fill:#475467;font-weight:700}.road{stroke:#fff;stroke-width:22;stroke-linecap:round;fill:none}.route{stroke:var(--blue);stroke-width:9;fill:none;stroke-linecap:round}.routeAnim{stroke:#9cc4ff;stroke-width:3;fill:none;stroke-linecap:round;stroke-dasharray:10 18;animation:flow 1s linear infinite}
+.you{fill:var(--blue);stroke:#fff;stroke-width:5}.dest{fill:#111;stroke:#fff;stroke-width:4}.destText{fill:#fff;font-weight:900;text-anchor:middle}
+.instruction{margin-top:12px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;display:flex;gap:12px;align-items:center}.turn{width:46px;height:46px;border-radius:50%;background:var(--green);color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900}
+.progress{height:5px;background:#e4e7ec;border-radius:999px;margin-top:12px;overflow:hidden}.progress i{display:block;height:100%;width:0;background:var(--green);transition:width .5s}
+.routeActions{display:flex;gap:10px;margin-top:12px}.routeActions button{flex:1}.empty{padding:28px;text-align:center;color:var(--muted)}
+.parkingGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.parkingGrid label{font-size:12px;color:var(--muted)}.parkingGrid input,.parkingGrid select{width:100%;margin-top:6px;border:1px solid #d0d5dd;border-radius:12px;padding:12px;background:#fff}
+.carBox{background:linear-gradient(135deg,#0b6df2,#174ea6);color:#fff;border-radius:18px;padding:18px;display:flex;justify-content:space-between;align-items:center}.bay{background:#fff;color:#111;border-radius:14px;padding:14px 18px;font-size:24px;font-weight:900}
+.bottom{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:min(430px,100%);background:#fff;border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);padding:9px 6px max(12px,env(safe-area-inset-bottom));z-index:5}.bottom button{border:0;background:none;color:#667085;font-size:12px}.bottom b{display:block;font-size:19px}.bottom .active{color:var(--green);font-weight:900}
+@keyframes flow{to{stroke-dashoffset:-28}}@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="brand"><div><h1>Mall Finder</h1><div class="mall">📍 Vaal Mall · Alpha V6</div></div><div class="avatar">DM</div></div><div class="search"><input id="search" autocomplete="off" placeholder="Search stores, food or facilities"></div></header>
+<main class="content">
+<section id="home">
+<div class="quick">
+<button data-filter="All">🛍️<b>Stores</b><small>Browse directory</small></button>
+<button data-filter="Facilities">🚻<b>Facilities</b><small>Toilets, ATMs and more</small></button>
+<button id="saveParkingBtn">🅿️<b>Save parking</b><small>Zone and bay</small></button>
+<button id="returnCarBtn">🚗<b>Return to my car</b><small>Start return route</small></button>
+</div>
+<div id="banner" class="banner"></div>
+<div class="section"><h2>Explore</h2><div id="chips" class="chips"></div></div>
+<div class="section"><div class="rowline"><h2 id="listTitle">Popular</h2><small id="count"></small></div><div id="results" class="results"></div></div>
+</section>
+
+<section id="storeView" class="view">
+<div class="sheet"><div class="hero"><div id="storeLogo" class="logo"></div><div><h2 id="storeName" style="margin:0"></h2><div id="storeOpen" class="open" style="font-size:13px;margin-top:4px"></div><div id="storeMeta" style="color:#667085;font-size:13px;margin-top:4px"></div></div></div>
+<div class="actions"><button id="navigateBtn" class="btn green">Navigate</button><button id="callBtn" class="btn outline">Call</button><button id="websiteBtn" class="btn outline">Website</button></div>
+<div id="storeRows" class="rows"></div></div>
+</section>
+
+<section id="parkingView" class="view">
+<div class="sheet"><h2 style="margin-top:0">Save parking</h2><p style="color:#667085">Record enough detail to find your vehicle again.</p>
+<div class="parkingGrid"><label>Zone<select id="parkingZone"><option>Blue Parking</option><option>Red Parking</option><option>East Parking</option><option>Food Court Parking</option></select></label><label>Bay<input id="parkingBay" maxlength="8" value="B14"></label></div>
+<label style="display:block;margin-top:12px;font-size:12px;color:#667085">Note<input id="parkingNote" style="width:100%;margin-top:6px;border:1px solid #d0d5dd;border-radius:12px;padding:12px" placeholder="Near pillar or entrance"></label>
+<button id="confirmParking" class="btn green" style="width:100%;margin-top:14px;padding:15px">Save location</button></div>
+</section>
+
+<section id="carView" class="view"><div class="sheet"><div id="carContent"></div></div></section>
+
+<section id="routeView" class="view">
+<div class="sheet"><div class="rowline"><div><small id="routeFrom">From PEP entrance</small><h2 id="routeTitle" style="margin:5px 0 0"></h2></div><button id="cancelRoute" class="btn outline">Cancel</button></div><div style="display:flex;gap:18px;color:#667085;font-size:13px;margin-top:10px"><span id="routeDistance"></span><span id="routeTime"></span></div></div>
+<div class="map"><svg viewBox="0 0 400 390" aria-label="Simplified Vaal Mall map">
+<rect class="shop" x="35" y="52" width="95" height="75" rx="8"/><text class="shopText" x="52" y="92">EDGARS</text>
+<rect class="shop" x="135" y="48" width="72" height="82" rx="8"/><text class="shopText" x="147" y="92">MR PRICE</text>
+<rect class="shop" x="210" y="42" width="120" height="92" rx="8"/><text class="shopText" x="246" y="90">WOOLWORTHS</text>
+<rect class="shop" x="287" y="190" width="76" height="70" rx="8"/><text class="shopText" x="300" y="225">CLICKS</text>
+<rect class="shop" x="110" y="230" width="110" height="82" rx="8"/><text class="shopText" x="132" y="270">ACKERMANS</text>
+<rect class="shop" x="230" y="250" width="125" height="85" rx="8"/><text class="shopText" x="263" y="295">FOOD COURT</text>
+<path class="road" d="M28 170 C85 168 120 145 165 152 C215 160 246 174 298 159 C335 148 360 158 382 177"/><path class="road" d="M167 152 C163 210 181 252 216 320"/>
+<path class="route" d="M28 170 C85 168 120 145 165 152 C215 160 246 174 298 159"/><path class="routeAnim" d="M28 170 C85 168 120 145 165 152 C215 160 246 174 298 159"/>
+<g id="youMarker" transform="translate(28 170)"><circle class="you" r="11"/></g><g transform="translate(298 159)"><path class="dest" d="M0 -22 C14 -22 22 -12 22 0 C22 16 0 33 0 33 C0 33 -22 16 -22 0 C-22 -12 -14 -22 0 -22Z"/><text id="destText" class="destText" x="0" y="7">W</text></g>
+</svg></div>
+<div class="instruction"><div class="turn">↑</div><div><h3 id="instructionTitle" style="margin:0 0 3px"></h3><p id="instructionSub" style="margin:0;color:#667085;font-size:13px"></p></div></div>
+<div class="progress"><i id="progressBar"></i></div><div class="routeActions"><button id="simulate" class="btn green">Simulate walking</button><button id="finishRoute" class="btn outline">Finish route</button></div>
+</section>
+
+<section id="arrivalView" class="view"><div class="sheet" style="text-align:center;padding:32px 18px"><div style="width:82px;height:82px;border-radius:50%;background:#006b45;color:#fff;display:grid;place-items:center;margin:auto;font-size:44px">✓</div><h2 style="font-size:28px;margin:18px 0 6px">You’ve arrived!</h2><b id="arrivalName"></b><div style="color:#667085;margin-top:4px">Ground floor</div><button id="continueShopping" class="btn green" style="width:100%;margin-top:22px;padding:15px">Continue shopping</button></div></section>
+</main>
+<nav class="bottom"><button id="homeTab" class="active"><b>⌂</b>Home</button><button id="searchTab"><b>⌕</b>Search</button><button id="mapTab"><b>🗺️</b>Map</button><button id="carTab"><b>🚗</b>My Car</button></nav>
+</div>
+<script>
+(()=>{"use strict";
+const $=id=>document.getElementById(id);
+const places=[
+{id:"woolworths",name:"Woolworths",category:"Fashion",floor:"Ground floor",distance:142,time:"2 min",icon:"W",open:true,hours:"09:00–18:00",entrance:"East / Woolworths side",nearby:"Toilets · 25 m",phone:"+27160000001",url:"https://www.woolworths.co.za"},
+{id:"clicks",name:"Clicks",category:"Health",floor:"Ground floor",distance:210,time:"3 min",icon:"C",open:true,hours:"09:00–18:00",entrance:"North entrance",nearby:"ATM · 40 m",phone:"+27160000002",url:"https://www.clicks.co.za"},
+{id:"wimpy",name:"Wimpy",category:"Food",floor:"Ground floor",distance:165,time:"2 min",icon:"W",open:true,hours:"08:00–19:00",entrance:"Food Court entrance",nearby:"Toilets · 30 m",phone:"+27160000003",url:"https://wimpy.co.za"},
+{id:"mr-price-sport",name:"Mr Price Sport",category:"Fashion",floor:"Ground floor",distance:188,time:"3 min",icon:"MPS",open:true,hours:"09:00–18:00",entrance:"PEP entrance",nearby:"ATM · 35 m",phone:"+27160000004",url:"https://www.mrpsport.com"},
+{id:"atm",name:"ATM",category:"Facilities",floor:"Ground floor",distance:98,time:"1 min",icon:"ATM",open:true,hours:"Mall hours",entrance:"PEP entrance",nearby:"Information desk · 15 m"},
+{id:"toilets",name:"Toilets",category:"Facilities",floor:"Ground floor",distance:120,time:"2 min",icon:"WC",open:true,hours:"Mall hours",entrance:"Food Court entrance",nearby:"Baby changing room"}
+];
+const state={filter:"All",query:"",selected:null,route:null,progress:0,timer:null};
+const views=["home","storeView","parkingView","carView","routeView","arrivalView"];
+function show(id){views.forEach(v=>$(v).style.display=v===id?"block":"none");document.querySelectorAll(".bottom button").forEach(b=>b.classList.remove("active"));if(id==="home")$("homeTab").classList.add("active");if(id==="carView")$("carTab").classList.add("active");window.scrollTo({top:0,behavior:"smooth"})}
+function toast(message){$("banner").textContent=message;$("banner").style.display="block";setTimeout(()=>$("banner").style.display="none",3500)}
+function filtered(){return places.filter(p=>(state.filter==="All"||p.category===state.filter)&&p.name.toLowerCase().includes(state.query.toLowerCase()))}
+function renderChips(){const cats=["All","Fashion","Food","Health","Facilities"];$("chips").innerHTML=cats.map(c=>`<button class="chip ${c===state.filter?"active":""}" data-category="${c}">${c}</button>`).join("");document.querySelectorAll("[data-category]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.category;renderChips();renderList()})}
+function renderList(){const list=filtered();$("listTitle").textContent=state.query?"Search results":state.filter==="All"?"Popular":state.filter;$("count").textContent=`${list.length} place${list.length===1?"":"s"}`;$("results").innerHTML=list.length?list.map(p=>`<div class="result" data-id="${p.id}"><div class="badge">${p.icon}</div><div class="meta"><h3>${p.name}</h3><p><span class="${p.open?"open":""}">${p.open?"Open":"Closed"}</span> · ${p.floor} · ${p.time}</p></div><button class="btn yellow">View</button></div>`).join(""):`<div class="empty card">No matching places found.</div>`;document.querySelectorAll(".result").forEach(r=>r.onclick=()=>openPlace(r.dataset.id))}
+function openPlace(id){const p=places.find(x=>x.id===id);state.selected=p;$("storeLogo").textContent=p.icon;$("storeName").textContent=p.name;$("storeOpen").textContent=p.open?"● Open":"● Closed";$("storeMeta").textContent=`${p.category} · ${p.floor}`;$("storeRows").innerHTML=`<div class="detailrow"><div><b>Trading hours</b><br><small>Today</small></div><b>${p.hours}</b></div><div class="detailrow"><div><b>Nearest entrance</b><br><small>${p.entrance}</small></div><b>${p.time}</b></div><div class="detailrow"><div><b>Nearby</b><br><small>${p.nearby}</small></div></div>`;$("callBtn").disabled=!p.phone;$("websiteBtn").disabled=!p.url;show("storeView")}
+function startRoute(target){clearInterval(state.timer);state.route=target;state.progress=0;$("routeTitle").textContent=target.name;$("routeDistance").textContent=`${target.distance||180} m`;$("routeTime").textContent=`${target.time||"3 min"} walk`;$("destText").textContent=(target.icon||"P").slice(0,3);updateRoute();show("routeView")}
+function updateRoute(){const p=Math.min(state.progress,100);$("progressBar").style.width=p+"%";const x=28+(270*p/100),y=170-11*Math.sin(p/17);$("youMarker").setAttribute("transform",`translate(${x} ${y})`);if(p<35){$("instructionTitle").textContent="Continue along the main corridor";$("instructionSub").textContent="Walk past the PEP entrance"}else if(p<75){$("instructionTitle").textContent=`Continue towards ${state.route.name}`;$("instructionSub").textContent="Keep straight at the next junction"}else{$("instructionTitle").textContent="Destination is on your right";$("instructionSub").textContent=`${state.route.name} is just ahead`}}
+function simulate(){clearInterval(state.timer);state.timer=setInterval(()=>{state.progress+=8;updateRoute();if(state.progress>=100){clearInterval(state.timer);setTimeout(finishRoute,350)}},500)}
+function finishRoute(){clearInterval(state.timer);$("arrivalName").textContent=state.route.name;show("arrivalView")}
+function getParking(){try{return JSON.parse(localStorage.getItem("mfParking"))}catch{return null}}
+function saveParking(){const parking={zone:$("parkingZone").value,bay:$("parkingBay").value.trim().toUpperCase()||"Unknown",note:$("parkingNote").value.trim(),time:Date.now()};localStorage.setItem("mfParking",JSON.stringify(parking));toast(`Parking saved: ${parking.zone}, bay ${parking.bay}.`);renderCar();show("carView")}
+function renderCar(){const p=getParking();if(!p){$("carContent").innerHTML=`<div class="empty"><h2>No parking saved</h2><p>Save your zone and bay before entering the mall.</p><button id="emptySave" class="btn green">Save parking</button></div>`;$("emptySave").onclick=()=>show("parkingView");return}$("carContent").innerHTML=`<div class="carBox"><div><small>Your vehicle is parked in</small><h2 style="margin:6px 0 4px">${p.zone}</h2><small>${p.note||"Saved location"}</small></div><div class="bay">${p.bay}</div></div><button id="routeCar" class="btn green" style="width:100%;margin-top:14px;padding:15px">Return to car</button><button id="editCar" class="btn outline" style="width:100%;margin-top:10px">Update parking</button><button id="clearCar" class="btn danger" style="width:100%;margin-top:10px">Clear saved parking</button>`;$("routeCar").onclick=()=>startRoute({name:"My parked car",icon:"P",distance:175,time:"3 min"});$("editCar").onclick=()=>{ $("parkingZone").value=p.zone;$("parkingBay").value=p.bay;$("parkingNote").value=p.note||"";show("parkingView")};$("clearCar").onclick=()=>{localStorage.removeItem("mfParking");renderCar();toast("Saved parking cleared.")}}
+$("search").oninput=e=>{state.query=e.target.value;state.filter="All";renderChips();renderList();show("home")};
+document.querySelectorAll("[data-filter]").forEach(b=>b.onclick=()=>{state.filter=b.dataset.filter;state.query="";$("search").value="";renderChips();renderList()});
+$("saveParkingBtn").onclick=()=>show("parkingView");$("confirmParking").onclick=saveParking;$("returnCarBtn").onclick=()=>{renderCar();show("carView")};
+$("navigateBtn").onclick=()=>startRoute(state.selected);$("callBtn").onclick=()=>state.selected?.phone&&(location.href=`tel:${state.selected.phone}`);$("websiteBtn").onclick=()=>state.selected?.url&&window.open(state.selected.url,"_blank","noopener");
+$("cancelRoute").onclick=()=>state.selected?show("storeView"):show("home");$("simulate").onclick=simulate;$("finishRoute").onclick=finishRoute;$("continueShopping").onclick=()=>show("home");
+$("homeTab").onclick=()=>show("home");$("searchTab").onclick=()=>{show("home");$("search").focus()};$("mapTab").onclick=()=>startRoute(places[0]);$("carTab").onclick=()=>{renderCar();show("carView")};
+renderChips();renderList();if(getParking())toast(`Saved car: ${getParking().zone}, bay ${getParking().bay}.`);
+})();
+</script>
+</body>
+</html>
