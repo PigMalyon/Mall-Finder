@@ -2,10 +2,21 @@ import type { Place } from './data';
 
 const synonymGroups: Record<string, string[]> = {
   toilet: ['bathroom', 'restroom', 'loo', 'wc'],
+  bathroom: ['toilet', 'restroom', 'loo', 'wc'],
   pharmacy: ['medicine', 'chemist', 'prescription'],
-  food: ['restaurant', 'lunch', 'dinner', 'coffee'],
+  medicine: ['pharmacy', 'chemist', 'prescription'],
+  food: ['restaurant', 'lunch', 'dinner', 'coffee', 'takeaway'],
+  restaurant: ['food', 'lunch', 'dinner', 'takeaway'],
   shoes: ['sneakers', 'footwear', 'trainers'],
-  clothing: ['fashion', 'clothes', 'apparel']
+  clothing: ['fashion', 'clothes', 'apparel'],
+  cash: ['atm', 'bank', 'money', 'withdrawal'],
+  atm: ['cash', 'bank', 'money', 'withdrawal'],
+  movies: ['cinema', 'film', 'entertainment'],
+  cinema: ['movies', 'film', 'entertainment'],
+  baby: ['nappy', 'changing', 'parents'],
+  help: ['information', 'customer service', 'lost and found'],
+  wheelchair: ['accessible', 'lift', 'elevator'],
+  groceries: ['supermarket', 'food', 'frozen']
 };
 
 function normalise(value: string) {
