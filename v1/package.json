@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "test": "tsx src/qa.test.ts",
+    "test:data": "tsx src/qa.test.ts",
+    "test:routing": "tsx src/routing.test.ts",
+    "test": "npm run test:data && npm run test:routing",
     "build": "npm test && tsc -b && vite build",
     "preview": "vite preview"
   },
