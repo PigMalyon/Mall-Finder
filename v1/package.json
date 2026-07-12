@@ -1,0 +1,27 @@
+{
+  "name": "mall-finder-v1",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "test:data": "tsx src/qa.test.ts",
+    "test:routing": "tsx src/routing.test.ts",
+    "test": "npm run test:data && npm run test:routing",
+    "build": "npm test && tsc -b && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@vitejs/plugin-react": "latest",
+    "vite": "latest",
+    "typescript": "latest",
+    "react": "latest",
+    "react-dom": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "tsx": "latest"
+  }
+}

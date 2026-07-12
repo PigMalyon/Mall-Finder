@@ -1,0 +1,31 @@
+name: Mall Finder v1 CI
+
+on:
+  pull_request:
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+  push:
+    branches:
+      - v1-react-foundation
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-ci.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v1
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install
+      - name: Build
+        run: npm run build
