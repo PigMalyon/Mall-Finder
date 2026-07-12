@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "test": "tsx src/qa.test.ts",
+    "build": "npm test && tsc -b && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -16,7 +17,9 @@
     "react-dom": "latest"
   },
   "devDependencies": {
+    "@types/node": "latest",
     "@types/react": "latest",
-    "@types/react-dom": "latest"
+    "@types/react-dom": "latest",
+    "tsx": "latest"
   }
 }
