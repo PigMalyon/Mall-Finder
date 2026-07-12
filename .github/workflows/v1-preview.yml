@@ -1,0 +1,42 @@
+name: Mall Finder v1 Preview
+
+on:
+  pull_request:
+    paths:
+      - 'v1/**'
+      - '.github/workflows/v1-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-preview:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: v1
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: v1/package-lock.json
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Validate mall data and build app
+        run: npm run build
+
+      - name: Upload installable preview
+        uses: actions/upload-artifact@v4
+        with:
+          name: mall-finder-v1-preview
+          path: v1/dist
+          if-no-files-found: error
+          retention-days: 14
