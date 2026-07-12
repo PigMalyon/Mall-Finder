@@ -13,10 +13,14 @@ export type Place = {
 export const places: Place[] = [
   { id: 'woolworths', name: 'Woolworths', category: 'Department store', floor: 'ground', icon: 'W', nodeId: 'wool', keywords: ['food', 'fashion', 'clothing', 'groceries'] },
   { id: 'dischem', name: 'Dis-Chem', category: 'Health & beauty', floor: 'ground', icon: 'Rx', nodeId: 'dischem', keywords: ['medicine', 'pharmacy', 'beauty', 'baby'] },
-  { id: 'adidas', name: 'Adidas', category: 'Footwear', floor: 'ground', icon: 'A', nodeId: 'adidas', keywords: ['shoes', 'sneakers', 'sport'] },
-  { id: 'food-court', name: 'Food Court', category: 'Food', floor: 'ground', icon: '🍽', nodeId: 'food', keywords: ['lunch', 'restaurant', 'coffee'] },
+  { id: 'adidas', name: 'Adidas', category: 'Footwear', floor: 'ground', icon: 'A', nodeId: 'adidas', keywords: ['shoes', 'sneakers', 'sport', 'trainers'] },
+  { id: 'food-court', name: 'Food Court', category: 'Food', floor: 'ground', icon: '🍽', nodeId: 'food', keywords: ['lunch', 'restaurant', 'coffee', 'takeaway'] },
+  { id: 'ground-toilets', name: 'Ground-floor toilets', category: 'Facility', floor: 'ground', icon: 'WC', nodeId: 'food', keywords: ['toilet', 'bathroom', 'restroom', 'loo'] },
+  { id: 'atm', name: 'ATM', category: 'Facility', floor: 'ground', icon: 'ATM', nodeId: 'hub', keywords: ['cash', 'bank', 'money', 'banking'] },
+  { id: 'information', name: 'Information Desk', category: 'Facility', floor: 'ground', icon: 'i', nodeId: 'hub', keywords: ['help', 'customer service', 'lost and found'] },
+  { id: 'accessible-lift', name: 'Accessible Lift', category: 'Facility', floor: 'ground', icon: '↕', nodeId: 'n2', keywords: ['lift', 'elevator', 'wheelchair', 'accessible'] },
   { id: 'john-dorys', name: "John Dory's", category: 'Restaurant', floor: 'upper', icon: 'JD', nodeId: 'john', keywords: ['seafood', 'restaurant', 'food'] },
-  { id: 'upper-toilets', name: 'Upper-level toilets', category: 'Facility', floor: 'upper', icon: 'WC', nodeId: 'toilets', keywords: ['toilet', 'bathroom', 'restroom'] }
+  { id: 'upper-toilets', name: 'Upper-level toilets', category: 'Facility', floor: 'upper', icon: 'WC', nodeId: 'toilets', keywords: ['toilet', 'bathroom', 'restroom', 'loo'] }
 ];
 
 export const nodes: Record<string, [number, number]> = {
